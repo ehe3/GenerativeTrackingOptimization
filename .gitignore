@@ -1,0 +1,5 @@
+build/*
+dep/*
+*.swp
+res/foot_mesh.obj
+compile_commands.json
