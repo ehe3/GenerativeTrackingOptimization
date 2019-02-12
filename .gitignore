@@ -1,5 +1,7 @@
 build/*
 dep/*
 *.swp
-res/foot_mesh.obj
+res/foot.obj
+res/foot.mtl
+res/skin.png
 compile_commands.json

@@ -10,9 +10,9 @@ set (source_dir "${PROJECT_SOURCE_DIR}/src")
 set (dep_dir "${PROJECT_SOURCE_DIR}/dep")
 set (include_dir "${PROJECT_SOURCE_DIR}/include")
 
-set (HEADER_FILES "${include_dir}/objloader.hpp")
-set (SOURCE_FILES "${include_dir}/objloader.cpp")
-set (ALL_DEPENDENCIES ${HEADER_FILES} ${SOURCE_FILES})
+#set (HEADER_FILES "")
+#set (SOURCE_FILES "") 
+#set (ALL_DEPENDENCIES ${HEADER_FILES} ${SOURCE_FILES})
 add_executable (out "${source_dir}/Application.cpp" ${ALL_DEPENDENCIES})
 target_include_directories(out PRIVATE ${include_dir})
 
@@ -37,3 +37,7 @@ target_include_directories(out PRIVATE ${OPENGL_INCLUDE_DIR})
 target_link_libraries(out ${OPENGL_gl_LIBRARY})
 target_link_libraries(out ${OPENGL_glu_LIBRARY})
 
+#ASSIMP
+find_package (ASSIMP REQUIRED)
+include_directories(${ASSIMP_INCLUDE_DIRS})
+target_link_libraries (out ${ASSIMP_LIBRARIES})
