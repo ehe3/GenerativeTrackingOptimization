@@ -84,24 +84,9 @@ int main(void)
 	GLuint depthrenderbuffer;
 	glGenRenderbuffers(1, &depthrenderbuffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowHeight, windowHeight);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
-
-	// Depth texture. Slower, but you can sample it later in your shader
-	GLuint depthTexture;
-	glGenTextures(1, &depthTexture);
-	glBindTexture(GL_TEXTURE_2D, depthTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-	
-	// Some copied texture 2D parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);	
-	
-	// For the depth map
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 	// No color buffer is drawn to
 	glDrawBuffer(GL_NONE);
@@ -116,7 +101,7 @@ int main(void)
 	// Save image only once in the loop
 	// TODO: CHANGE TO OFFLINE
 	bool didSaveImage = false;
-	float* depthImage = new float[windowWidth*windowHeight];
+	float* depthImageFromRenderbuffer = new float[windowWidth*windowHeight];
 
 	// Load model
 	const char* footModelPath = "../res/foot.obj";
@@ -129,12 +114,12 @@ int main(void)
 		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Drawing the 3D model
+		// Drawing the 3D modelfrom
 		float zNear = 0.1f;
 		float zFar = 1.0f;
 		// Rotations are in radians
 		float rotateX = PI/2 + PI/8;
-		float rotateY = 0;
+		float rotateY = PI/2;
 		float rotateZ = 0;
 		float translateX = -0.1f; // left right
 		float translateY = 0.0f; // up down
@@ -156,9 +141,9 @@ int main(void)
 		footModel.Draw(RTTShader);
 
 		// Render to our framebuffer
-		glBindTexture(GL_TEXTURE_2D, depthTexture);
-		glBindFramebuffer(GL_FRAMEBUFFER, depthTexture);
-		
+		glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthrenderbuffer);
+
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
 
@@ -168,32 +153,10 @@ int main(void)
 		// Save image
 		if (!didSaveImage)
 		{
-			// check texture validity
-			int width;
-			int height;
-			int depth;
+			glReadPixels(0, 0, windowWidth, windowHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthImageFromRenderbuffer);
 
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_DEPTH, &depth);
-			// make sure things are not fishy
-			if (width != windowWidth || height != windowHeight || depth != 1)
-			{
-				std::cerr << "either texture width, texture height, or texture depth is incorrect" << std::endl;
-				std::cerr << "expected width: " << windowWidth << ", actual width: " << width << std::endl;
-				std::cerr << "expected height: " << windowHeight << ", actual height: " << height << std::endl;
-				std::cerr << "expected depth: 1, actual depth: " << depth << std::endl;
-				return -1;
-			}
-
-			glGetTexImage(GL_TEXTURE_2D, 0,	GL_DEPTH_COMPONENT, GL_FLOAT, depthImage);
-
-			//for (int i=0; i < windowWidth*windowHeight; i++)
-			//{
-			//	std::cout << depthImage[i] << " ";
-			//}
 			const char* outputPath = "/home/eric/Dev/dm.txt";
-			WriteToFile(depthImage, windowWidth, windowHeight, outputPath);
+			WriteToFile(depthImageFromRenderbuffer, windowWidth, windowHeight, outputPath);
 			didSaveImage = true;
 		}
 	}
