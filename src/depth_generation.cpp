@@ -3,15 +3,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-
-#include "shader.h"
 #include "model.h"
+#include "depth_generation.h"
 
-static const float PI = 3.1415926;
+static const float PI = 3.1415926535;
 static const int windowWidth = 480;
 static const int windowHeight = 360;
 
@@ -28,43 +23,30 @@ static const int windowHeight = 360;
 //	}
 //}
 
-static void WriteToFile(const float* depthBuffer, const int& width, const int& height, const char* destination) 
-{
-	std::ofstream outfile(destination);
-	for (int i=0; i < height; i++) 
-	{
-		for (int j = 0; j < width; j++)
-		{
-			outfile << depthBuffer[i*width+j] << " ";
-		}
-		outfile << std::endl;
-	}
-	outfile.close();
-}
-
-int main(void)
+float** GenerateMapsFromPoseParameters(int numParams, PoseParameters* poseparams)
 {
 	GLFWwindow* window;
 
 	/* Initialize the library */
 	if (!glfwInit())
-		return -1;
+		return NULL;
 
 	/* Create a windowed mode window and its OpenGL context */
 	window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL Testing", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
-		return -1;
+		return NULL;
 	}
 
-	/* Make the window's context current */
+	// Make the window's context current and then hide it 
 	glfwMakeContextCurrent(window);
+	glfwHideWindow(window);
 
 	// Initialize GLEW
 	glewExperimental = true;
 	if (glewInit() != GLEW_OK)
-		return -1;
+		return NULL;
 
 	// Get and set up the shaders
 	const char* RTTVertexShaderPath = "../res/shaders/RTTVShader.glsl";
@@ -90,46 +72,38 @@ int main(void)
 
 	// No color buffer is drawn to
 	glDrawBuffer(GL_NONE);
-	
+
 	// check if the framebuffer is OK
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) 
 	{
 		std::cerr << "framebuffer setup was not successful" << std::endl;
-		return -1;
+		return NULL;
 	}
 
-	// Save image only once in the loop
-	// TODO: CHANGE TO OFFLINE
-	bool didSaveImage = false;
-	float* depthImageFromRenderbuffer = new float[windowWidth*windowHeight];
+	// Save image into array
+	float** depthImages = new float*[numParams];
 
 	// Load model
 	const char* footModelPath = "../res/foot.obj";
 	Model footModel(footModelPath);
 
-	/* Loop until the user closes the window */
-	while (!glfwWindowShouldClose(window))
-	{
+	float zNear = 0.1f;
+	float zFar = 1.0f;
+	
+	for (int i = 0; i < numParams; i++) {
+		// allocate space for depth image
+		float* depthImageFromRenderbuffer = new float[windowWidth*windowHeight];
+		
 		/* Render here */
-		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Drawing the 3D modelfrom
-		float zNear = 0.1f;
-		float zFar = 1.0f;
-		// Rotations are in radians
-		float rotateX = PI/2 + PI/8;
-		float rotateY = PI/2;
-		float rotateZ = 0;
-		float translateX = -0.1f; // left right
-		float translateY = 0.0f; // up down
-		float translateZ = -0.15f; // near far
+		glClear(GL_DEPTH_BUFFER_BIT);
+		
 		// Set up MVP matricies
-		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(translateX, translateY, translateZ));
-		model = glm::rotate(glm::rotate(glm::rotate(model, rotateX, glm::vec3(1, 0, 0)), rotateY, glm::vec3(0, 1, 0)), rotateZ, glm::vec3(0, 0, 1));
+		PoseParameters params = poseparams[i];
+		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(params.XTranslation, params.YTranslation, params.ZTranslation));
+		model = glm::rotate(glm::rotate(glm::rotate(model, params.XRotation, glm::vec3(1, 0, 0)), params.YRotation, glm::vec3(0, 1, 0)), params.ZRotation, glm::vec3(0, 0, 1));
 		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -0.05f));
 		glm::mat4 proj = glm::perspective(58.59f, 1.778f, zNear, zFar);
-
+		
 		// Set up shader
 		RTTShader.use();
 		RTTShader.setMat4("u_M", model);
@@ -139,25 +113,15 @@ int main(void)
 		RTTShader.setFloat("zNear", zNear);
 		RTTShader.setFloat("zFar", zFar);
 		footModel.Draw(RTTShader);
-
+	
 		// Render to our framebuffer
 		glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
 		glBindFramebuffer(GL_FRAMEBUFFER, depthrenderbuffer);
 
-		/* Swap front and back buffers */
-		glfwSwapBuffers(window);
-
-		/* Poll for and process events */
-		glfwPollEvents();
-	
 		// Save image
-		if (!didSaveImage)
-		{
-			glReadPixels(0, 0, windowWidth, windowHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthImageFromRenderbuffer);
-
-			const char* outputPath = "/home/eric/Dev/dm.txt";
-			WriteToFile(depthImageFromRenderbuffer, windowWidth, windowHeight, outputPath);
-			didSaveImage = true;
-		}
+		glReadPixels(0, 0, windowWidth, windowHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthImageFromRenderbuffer);		
+		depthImages[i] = depthImageFromRenderbuffer;
 	}
+
+	return depthImages;
 }
