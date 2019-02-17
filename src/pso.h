@@ -14,11 +14,10 @@ public:
 	float XRotation;
 	float YRotation;
 	float ZRotation;
-	float Scale;
 	
-	PoseParameters() : XTranslation{0.0f}, YTranslation{0.0f}, ZTranslation{0.0f}, XRotation{0.0f}, YRotation{0.0f}, ZRotation{0.0f}, Scale{1.0f} {}
+	PoseParameters() : XTranslation{0.0f}, YTranslation{0.0f}, ZTranslation{0.0f}, XRotation{0.0f}, YRotation{0.0f}, ZRotation{0.0f} {}
 
-	PoseParameters(float xtrans, float ytrans, float ztrans, float xrot, float yrot, float zrot, float scale=1.0f) : XTranslation{xtrans}, YTranslation{ytrans}, ZTranslation{ztrans}, XRotation{xrot}, YRotation{yrot}, ZRotation{zrot}, Scale{scale} {}
+	PoseParameters(float xtrans, float ytrans, float ztrans, float xrot, float yrot, float zrot) : XTranslation{xtrans}, YTranslation{ytrans}, ZTranslation{ztrans}, XRotation{xrot}, YRotation{yrot}, ZRotation{zrot} {}
 
 	PoseParameters(const PoseParameters &params)
 	{
@@ -28,7 +27,6 @@ public:
 		XRotation = params.XRotation;
 		YRotation = params.YRotation;
 		ZRotation = params.ZRotation;
-		Scale = params.Scale;
 	}
 
 	PoseParameters operator+(PoseParameters const &obj) const
@@ -62,7 +60,7 @@ public:
 	PoseParameters BestPosition;
 	PoseParameters Velocity;
 
-	Particle(PoseParameters initialPosition, float energy): Position{initialPosition}, BestEnergyScore{energy}, BestPosition{initialPosition}, Velocity{PoseParameters(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)} {}
+	Particle(PoseParameters initialPosition, float energy): Position{initialPosition}, BestEnergyScore{energy}, BestPosition{initialPosition}, Velocity{PoseParameters()} {}
 
 	Particle(): Position{PoseParameters()}, BestEnergyScore{std::numeric_limits<float>::infinity()}, BestPosition{PoseParameters()}, Velocity{PoseParameters()} {}
 
@@ -87,7 +85,6 @@ private:
 	PoseParameters GlobalBestPosition;
 	float GlobalBestEnergy;
 
-
 public:
 	PSO(PoseParameters* parameterList, float* refImg, int numParticles, int iters, int ImgWidth, int ImgHeight, float CogConst=2.8, float SocConst=1.3) : referenceImage{refImg}, populationSize{numParticles}, iterations{iters}, ImageWidth{ImgWidth}, ImageHeight{ImgHeight}, CognitiveConst{CogConst}, SocialConst{SocConst}, ConstrictionConst{0.0f}, GlobalBestPosition{PoseParameters()}, GlobalBestEnergy{std::numeric_limits<float>::infinity()} {
 		float Phi = CognitiveConst + SocialConst;
@@ -109,6 +106,7 @@ public:
 	{
 		for (int generation = 0; generation < iterations; generation++)
 		{
+			std::cout << "Current Global best energy: " << GlobalBestEnergy << std::endl;
 			float** DepthImages = GenerateMapsFromParticles(populationSize, particles);
 			for (int p = 0; p < populationSize; p++)
 			{

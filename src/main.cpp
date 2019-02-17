@@ -61,9 +61,14 @@ int main()
 	PoseParameters params6(-0.04f, 0.13f, -0.62f, PI/2, 1.5 * PI - 0.12, -PI/4 - 0.12);
 	PoseParameters params[6] = {params1, params2, params3, params4, params5, params6};
 	float** images = GenerateMapsFromPoseParameters(6, params);
+	std::cout << std::endl << std::endl << "HEREERERER" << std::endl << std::endl;
+	for (int i = 0; i < 6; i++)
+	{
+		std::cout << "Image " << i << ": " << CalculateEnergy(readImage, images[i], width*height) << std::endl;
+	}
 	PSO pso(params, readImage, 6, 20, 200, 200);
 	PoseParameters optimizedParams = pso.Run();
-	std::cout << optimizedParams.XTranslation << " " << optimizedParams.YTranslation << " " << optimizedParams.ZTranslation << " " << optimizedParams.XRotation << " " << optimizedParams.YRotation << " " << optimizedParams.ZRotation << " " << optimizedParams.Scale << std::endl;
+	std::cout << optimizedParams.XTranslation << " " << optimizedParams.YTranslation << " " << optimizedParams.ZTranslation << " " << optimizedParams.XRotation << " " << optimizedParams.YRotation << " " << optimizedParams.ZRotation << std::endl;
 	
 	for (int i = 0; i < 6; i++)
 	{
@@ -75,4 +80,5 @@ int main()
 	float** image = GenerateMapsFromPoseParameters(1, oppa);
 	const char* optimgoutput = "/home/eric/Dev/Depth-Resources/opt.txt";
 	WriteToFile(image[0], 200, 200, optimgoutput);
+	std::cout << "Opt: " << CalculateEnergy(readImage, image[0], width*height);
 }

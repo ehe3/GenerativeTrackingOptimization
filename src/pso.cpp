@@ -137,7 +137,7 @@ float** GenerateMapsFromParticles(int numParams, Particle* particles)
 		PoseParameters params = particles[i].Position;
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(params.XTranslation, params.YTranslation, params.ZTranslation));
 		model = glm::rotate(glm::rotate(glm::rotate(model, params.XRotation, glm::vec3(1, 0, 0)), params.YRotation, glm::vec3(0, 1, 0)), params.ZRotation, glm::vec3(0, 0, 1));
-		model = glm::scale(model, glm::vec3(params.Scale));
+		model = glm::scale(model, glm::vec3(2.0f));
 		glm::mat4 proj = glm::perspective(58.59f, 1.778f, zNear, zFar);
 		// Set up shader
 		RTTShader.use();
@@ -239,13 +239,11 @@ float** GenerateMapsFromPoseParameters(int numParams, PoseParameters* poseparams
 		PoseParameters params = poseparams[i];
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(params.XTranslation, params.YTranslation, params.ZTranslation));
 		model = glm::rotate(glm::rotate(glm::rotate(model, params.XRotation, glm::vec3(1, 0, 0)), params.YRotation, glm::vec3(0, 1, 0)), params.ZRotation, glm::vec3(0, 0, 1));
-		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -0.05f));
+		model = glm::scale(model, glm::vec3(2.0f));
 		glm::mat4 proj = glm::perspective(58.59f, 1.778f, zNear, zFar);
-
 		// Set up shader
 		RTTShader.use();
 		RTTShader.setMat4("u_M", model);
-		RTTShader.setMat4("u_V", view);
 		RTTShader.setMat4("u_P", proj);
 		RTTShader.setMat4("u_P_F", proj);
 		RTTShader.setFloat("zNear", zNear);
