@@ -1,9 +1,56 @@
 #pragma once
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+
+#include "model.h"
+
+// This method would be faster if loops were constructed better
+//float* CropImage(float* originalImage, const int& originalWidth, const int& originalHeight, const int& newWidth, const int& newHeight);
+
+float* CropImage(float* originalImage, const int& originalWidth, const int& originalHeight, const int& newWidth, const int& newHeight)
+{
+	int xStart = (originalWidth - newWidth) / 2;
+	int xEnd = (originalWidth + newWidth) / 2;
+	int yStart = (originalHeight - newHeight) / 2;
+	int yEnd = (originalHeight + newHeight) / 2;
+
+	float* croppedImage = new float[newWidth*newHeight];
+	int index = 0;
+
+	for (int h = 0; h < originalHeight; h++)
+	{
+		for (int w = 0; w < originalWidth; w++)
+		{
+			// Check to see if in cropping range
+			if (w >= xStart && w < xEnd && h >= yStart && h < yEnd)
+			{
+				croppedImage[index] = originalImage[h*originalWidth + w];
+				index = index + 1;
+			}
+		}
+	}
+	
+	return croppedImage;
+}
+
+
+float CalculateEnergy(float* depthImage1, float* depthImage2, int imageSize)
+{
+	float energy = 0.0f;
+	for (int i = 0; i < imageSize; i++)
+	{
+		energy = energy + std::abs(depthImage1[i] - depthImage2[i]);
+	}
+	return energy;
+}
 
 struct PoseParameters
 {
@@ -39,7 +86,7 @@ public:
 		return PoseParameters(XTranslation - obj.XTranslation, YTranslation - obj.YTranslation, ZTranslation - obj.ZTranslation, XRotation - obj.XRotation, YRotation - obj.YRotation, ZRotation - obj.ZRotation);	
 	}
 
-	PoseParameters scale(float c)
+	PoseParameters operator*(float c)
 	{
 		return PoseParameters(c * XTranslation, c * YTranslation, c * ZTranslation, c * XRotation, c * YRotation, c * ZRotation);
 	}
@@ -104,32 +151,120 @@ public:
 
 	PoseParameters Run()
 	{
+		GLFWwindow* window;
+
+		// Initialize GLFW
+		if (!glfwInit())
+		{
+			std::cerr << "WARNING: GLFW not initialized properly" << std::endl;
+		}
+
+		// Create a windowed mode winodw and its OpenGL context
+		window = glfwCreateWindow(640, 360, "Depth", NULL, NULL);
+		if (!window)
+		{
+			glfwTerminate();
+			std::cerr << "WARNING: GLFW window was not created properly" << std::endl;
+		}
+
+		// Make the window's context current and then hide it
+		glfwMakeContextCurrent(window);
+		glfwHideWindow(window);
+
+		// Initialize GLEW
+		glewExperimental = true;
+		if (glewInit() != GLEW_OK)
+		{
+			std::cerr << "WARNING: GLEW not initialized properly" << std::endl;
+		}
+		
+		// Get and set up the shaders
+		const char* VertexShaderPath = "../res/shaders/RTTVShader.glsl";
+		const char* FragmentShaderPath = "../res/shaders/RTTFShader.glsl";
+		Shader Shader(VertexShaderPath, FragmentShaderPath);
+
+		// Enable depth testing
+		glEnable(GL_DEPTH_TEST);
+
+		// Set up framebuffer
+		GLuint framebuffer;
+		glGenFramebuffers(1, &framebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+		// Set up renderbuffer for depth
+		GLuint depthrenderbuffer;
+		glGenRenderbuffers(1, &depthrenderbuffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 640, 360);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+
+		// No color buffer is drawn to (check if this is even necessary)
+		glDrawBuffer(GL_NONE);
+
+		// Check if the framebuffer was set up correctly
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		{
+			std::cerr << "WARNING: framebuffer setup was not successful" << std::endl;
+		}
+		
+		// Load the foot model (think of making foot model smaller)
+		const char* footmodelpath = "../res/foot.obj";
+		Model footModel(footmodelpath);
+
+		// Setup finished, start the particle swarm!
 		for (int generation = 0; generation < iterations; generation++)
 		{
-			std::cout << "Current Global best energy: " << GlobalBestEnergy << std::endl;
-			float** DepthImages = GenerateMapsFromParticles(populationSize, particles);
 			for (int p = 0; p < populationSize; p++)
 			{
-					float currentIndividualEnergy = CalculateEnergy(referenceImage, DepthImages[p], ImageWidth*ImageHeight);
-					if (currentIndividualEnergy < particles[p].BestEnergyScore)
+				// See if this array actually needs to be allocated on the heap + memory management
+				float* depthImageFromRenderbuffer = new float[640*360];
+
+				// First, generate the depth maps from OpenGL context
+				PoseParameters params = particles[p].Position;
+				
+				// Clear Depth Buffer
+				glClear(GL_DEPTH_BUFFER_BIT);
+
+				// Set up MVP matricies
+				glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(params.XTranslation, params.YTranslation, params.ZTranslation));
+				model = glm::rotate(glm::rotate(glm::rotate(model, params.XRotation, glm::vec3(1, 0, 0)), params.YRotation, glm::vec3(0, 1, 0)), params.ZRotation, glm::vec3(0, 0, 1));
+				model = glm::scale(model, glm::vec3(2.0f));
+				glm::mat4 proj = glm::perspective(58.59f, 1.778f, 0.05f, 1.0f);
+				
+				// Send matricies to shader
+				Shader.use(); // Check to see if this needs to be called every time
+				Shader.setMat4("u_M", model);
+				Shader.setMat4("u_P", proj);
+				Shader.setMat4("u_P_F", proj);
+				Shader.setFloat("zNear", 0.05f);
+				Shader.setFloat("zFar", 1.0f);
+				footModel.Draw(Shader);
+
+				// Save image
+				glReadPixels(0, 0, 640, 360, GL_DEPTH_COMPONENT, GL_FLOAT, depthImageFromRenderbuffer);
+			
+				// Start swarm calculations
+				float* croppedDM = CropImage(depthImageFromRenderbuffer, 640, 360, 200, 200);
+				float currentIndividualEnergy = CalculateEnergy(referenceImage, croppedDM, 200*200);	
+				delete[] croppedDM;
+				delete[] depthImageFromRenderbuffer;
+
+				if (currentIndividualEnergy < particles[p].BestEnergyScore)
+				{
+					particles[p].BestEnergyScore = currentIndividualEnergy;
+					particles[p].BestPosition = particles[p].Position;
+					if (currentIndividualEnergy < GlobalBestEnergy)
 					{
-						particles[p].BestEnergyScore = currentIndividualEnergy;
-						particles[p].BestPosition = particles[p].Position;
-						if (currentIndividualEnergy < GlobalBestEnergy) 
-						{
-							GlobalBestEnergy = currentIndividualEnergy;
-							GlobalBestPosition = particles[p].Position;
-						}
-					}	
-					float r1 = ((float) std::rand() / RAND_MAX);
-			    float r2 = ((float) std::rand() / RAND_MAX);
-					particles[p].Velocity = particles[p].Velocity + ((particles[p].BestPosition - particles[p].Position).scale(CognitiveConst).scale(r1) + (GlobalBestPosition - particles[p].Position).scale(SocialConst).scale(r2)).scale(ConstrictionConst);
-					particles[p].Position = particles[p].Position + particles[p].Velocity;
+						GlobalBestEnergy = currentIndividualEnergy;
+						GlobalBestPosition = particles[p].Position;
+					}
+				}
+				float r1 = ((float) std::rand() / RAND_MAX);
+				float r2 = ((float) std::rand() / RAND_MAX);
+				particles[p].Velocity = particles[p].Velocity + ((particles[p].BestPosition - particles[p].Position)*CognitiveConst*r1 + (GlobalBestPosition - particles[p].Position)*SocialConst*r2)*ConstrictionConst;
+				particles[p].Position = particles[p].Position + particles[p].Velocity; 
 			}
 		}
 		return GlobalBestPosition;
 	}
-
 };
-
-

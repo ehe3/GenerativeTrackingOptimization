@@ -11,7 +11,7 @@ set (dep_dir "${PROJECT_SOURCE_DIR}/dep")
 set (include_dir "${PROJECT_SOURCE_DIR}/include")
 
 set (HEADER_FILES "${source_dir}/pso.h")
-set (SOURCE_FILES "${source_dir}/pso.cpp") 
+set (SOURCE_FILES)
 set (ALL_DEPENDENCIES ${HEADER_FILES} ${SOURCE_FILES})
 add_executable (runme "${source_dir}/main.cpp" ${ALL_DEPENDENCIES})
 target_include_directories(runme PRIVATE ${include_dir})
