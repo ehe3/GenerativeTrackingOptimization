@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#include <chrono>
 
 #include "model.h"
 
@@ -210,7 +211,9 @@ public:
 		// Load the foot model (think of making foot model smaller)
 		const char* footmodelpath = "../res/foot.obj";
 		Model footModel(footmodelpath);
-
+		
+		// Time the PSO without setup
+		auto start = std::chrono::high_resolution_clock::now();
 		// Setup finished, start the particle swarm!
 		for (int generation = 0; generation < iterations; generation++)
 		{
@@ -221,15 +224,15 @@ public:
 
 				// First, generate the depth maps from OpenGL context
 				PoseParameters params = particles[p].Position;
-				
+				particles[p].Position.Print();			
 				// Clear Depth Buffer
 				glClear(GL_DEPTH_BUFFER_BIT);
 
 				// Set up MVP matricies
 				glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(params.XTranslation, params.YTranslation, params.ZTranslation));
 				model = glm::rotate(glm::rotate(glm::rotate(model, params.XRotation, glm::vec3(1, 0, 0)), params.YRotation, glm::vec3(0, 1, 0)), params.ZRotation, glm::vec3(0, 0, 1));
-				model = glm::scale(model, glm::vec3(2.0f));
-				glm::mat4 proj = glm::perspective(58.59f, 1.778f, 0.05f, 1.0f);
+				model = glm::scale(model, glm::vec3(1.0f));
+				glm::mat4 proj = glm::perspective(glm::radians(58.59f), 1.778f, 0.05f, 1.0f);
 				
 				// Send matricies to shader
 				Shader.use(); // Check to see if this needs to be called every time
@@ -249,6 +252,8 @@ public:
 				delete[] croppedDM;
 				delete[] depthImageFromRenderbuffer;
 
+				std::cout << "cie: " << currentIndividualEnergy << std::endl;
+				std::cout << "cbes for particle " << p << ": " << particles[p].BestEnergyScore << std::endl;
 				if (currentIndividualEnergy < particles[p].BestEnergyScore)
 				{
 					particles[p].BestEnergyScore = currentIndividualEnergy;
@@ -259,12 +264,15 @@ public:
 						GlobalBestPosition = particles[p].Position;
 					}
 				}
+				std::cout << "gbe: " << GlobalBestEnergy << std::endl;
 				float r1 = ((float) std::rand() / RAND_MAX);
 				float r2 = ((float) std::rand() / RAND_MAX);
 				particles[p].Velocity = particles[p].Velocity + ((particles[p].BestPosition - particles[p].Position)*CognitiveConst*r1 + (GlobalBestPosition - particles[p].Position)*SocialConst*r2)*ConstrictionConst;
 				particles[p].Position = particles[p].Position + particles[p].Velocity; 
 			}
 		}
+		auto end = std::chrono::high_resolution_clock::now();
+		std::cout << "Time it took for PSO to execute without OpenGL setup is: " << std::chrono::duration_cast<std::chrono::milliseconds> (end-start).count() << std::endl;
 		return GlobalBestPosition;
 	}
 };

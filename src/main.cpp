@@ -88,8 +88,8 @@ float** GenerateMapsFromPoseParameters(int numParams, PoseParameters* poseparams
 		PoseParameters params = poseparams[i];
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(params.XTranslation, params.YTranslation, params.ZTranslation));
 		model = glm::rotate(glm::rotate(glm::rotate(model, params.XRotation, glm::vec3(1, 0, 0)), params.YRotation, glm::vec3(0, 1, 0)), params.ZRotation, glm::vec3(0, 0, 1));
-		model = glm::scale(model, glm::vec3(2.0f));
-		glm::mat4 proj = glm::perspective(58.59f, 1.778f, zNear, zFar);
+		model = glm::scale(model, glm::vec3(1.0f));
+		glm::mat4 proj = glm::perspective(glm::radians(58.59f), 1.778f, zNear, zFar);
 		// Set up shader
 		RTTShader.use();
 		RTTShader.setMat4("u_M", model);
@@ -171,7 +171,7 @@ int main()
 		std::cout << "Image " << i << ": " << CalculateEnergy(readImage, images[i], width*height) << std::endl;
 	}
 	auto start = std::chrono::high_resolution_clock::now();
-	PSO pso(params, readImage, 6, 100, 200, 200);
+	PSO pso(params, readImage, 6, 15, 200, 200);
 	PoseParameters optimizedParams = pso.Run();
 	auto end = std::chrono::high_resolution_clock::now();
 	std::cout << "TOTAL TIME IN MILLISECONDS: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
