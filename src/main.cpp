@@ -171,7 +171,7 @@ int main()
 		std::cout << "Image " << i << ": " << CalculateEnergy(readImage, images[i], width*height) << std::endl;
 	}
 	auto start = std::chrono::high_resolution_clock::now();
-	PSO pso(params, readImage, 6, 15, 200, 200);
+	PSO pso(params, readImage, 6, 30, 200, 200);
 	PoseParameters optimizedParams = pso.Run();
 	auto end = std::chrono::high_resolution_clock::now();
 	std::cout << "TOTAL TIME IN MILLISECONDS: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
