@@ -11,6 +11,7 @@ uniform sampler2D gendepTexture;
 
 void main()
 {
+	//FragColor = texture(screenTexture, TexCoords);
 	vec4 ref = texture(screenTexture, TexCoords);
 	vec4 rend = texture(gendepTexture, TexCoords);
 	if (ref.x > rend.x)

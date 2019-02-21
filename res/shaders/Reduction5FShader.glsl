@@ -7,34 +7,38 @@ in vec2 TexCoords;
 out vec4 FragColor;
 
 uniform sampler2D tex;
+uniform float width;
+uniform float height;
 
 void main()
 {
-	vec4 c00 = texture(tex, TexCoords);
-	vec4 c01 = texture(tex, TexCoords + vec2(0, 1));
-	vec4 c10 = texture(tex, TexCoords + vec2(1, 0));
-	vec4 c11 = texture(tex, TexCoords + vec2(1, 1));
-	vec4 c02 = texture(tex, TexCoords + vec2(0, 2));
-	vec4 c12 = texture(tex, TexCoords + vec2(1, 2));
-	vec4 c22 = texture(tex, TexCoords + vec2(2, 2));
-	vec4 c21 = texture(tex, TexCoords + vec2(2, 1));
-	vec4 c20 = texture(tex, TexCoords + vec2(2, 0));
-	vec4 c03 = texture(tex, TexCoords + vec2(0, 3));
-	vec4 c13 = texture(tex, TexCoords + vec2(1, 3));
-	vec4 c23 = texture(tex, TexCoords + vec2(2, 3));
-	vec4 c33 = texture(tex, TexCoords + vec2(3, 3));
-	vec4 c32 = texture(tex, TexCoords + vec2(3, 2));
-	vec4 c31 = texture(tex, TexCoords + vec2(3, 1));
-	vec4 c30 = texture(tex, TexCoords + vec2(3, 0));
-	vec4 c04 = texture(tex, TexCoords + vec2(0, 4));
-	vec4 c14 = texture(tex, TexCoords + vec2(1, 4));
-	vec4 c24 = texture(tex, TexCoords + vec2(2, 4));
-	vec4 c34 = texture(tex, TexCoords + vec2(3, 4));
-	vec4 c44 = texture(tex, TexCoords + vec2(4, 4));
-	vec4 c43 = texture(tex, TexCoords + vec2(4, 3));
-	vec4 c42 = texture(tex, TexCoords + vec2(4, 2));
-	vec4 c41 = texture(tex, TexCoords + vec2(4, 1));
-	vec4 c40 = texture(tex, TexCoords + vec2(4, 0));
+	int x = int(TexCoords.x * (width - 1.0));
+	int y = int((TexCoords.y - 0.8) * (height - 1.0));
+	vec4 c00 = texelFetch(tex, ivec2(5*x, 5*y+1), 0); 
+	vec4 c01 = texelFetch(tex, ivec2(5*x, 5*y+1), 0); 
+	vec4 c10 = texelFetch(tex, ivec2(5*x+1, 5*y), 0);
+	vec4 c11 = texelFetch(tex, ivec2(5*x+1, 5*y+1), 0);
+	vec4 c02 = texelFetch(tex, ivec2(5*x, 5*y+2), 0);
+	vec4 c12 = texelFetch(tex, ivec2(5*x+1, 5*y+2), 0);
+	vec4 c22 = texelFetch(tex, ivec2(5*x+2, 5*y+2), 0);
+	vec4 c21 = texelFetch(tex, ivec2(5*x+2, 5*y+1), 0);
+	vec4 c20 = texelFetch(tex, ivec2(5*x+2, 5*y), 0);
+	vec4 c03 = texelFetch(tex, ivec2(5*x, 5*y+3), 0);
+	vec4 c13 = texelFetch(tex, ivec2(5*x+1, 5*y+3), 0);
+	vec4 c23 = texelFetch(tex, ivec2(5*x+2, 5*y+3), 0);
+	vec4 c33 = texelFetch(tex, ivec2(5*x+3, 5*y+3), 0);
+	vec4 c32 = texelFetch(tex, ivec2(5*x+3, 5*y+2), 0);
+	vec4 c31 = texelFetch(tex, ivec2(5*x+3, 5*y+1), 0);
+	vec4 c30 = texelFetch(tex, ivec2(5*x+3, 5*y), 0);
+	vec4 c04 = texelFetch(tex, ivec2(5*x, 5*y+4), 0);
+	vec4 c14 = texelFetch(tex, ivec2(5*x+1, 5*y+4), 0);
+	vec4 c24 = texelFetch(tex, ivec2(5*x+2, 5*y+4), 0);
+	vec4 c34 = texelFetch(tex, ivec2(5*x+3, 5*y+4), 0);
+	vec4 c44 = texelFetch(tex, ivec2(5*x+4, 5*y+4), 0);
+	vec4 c43 = texelFetch(tex, ivec2(5*x+4, 5*y+3), 0);
+	vec4 c42 = texelFetch(tex, ivec2(5*x+4, 5*y+2), 0);
+	vec4 c41 = texelFetch(tex, ivec2(5*x+4, 5*y+1), 0);
+	vec4 c40 = texelFetch(tex, ivec2(5*x+4, 5*y), 0);
 
 	FragColor = (c00 + c01 + c02 + c03 + c04 + c10 + c11 + c12 + c13 + c14 + c20 + c21 + c22 + c23 + c24 + c30 + c31 + c32 + c33 + c34 + c40 + c41 + c42 + c43 + c44) / 25.0;
 

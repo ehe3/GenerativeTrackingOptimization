@@ -205,6 +205,8 @@ public:
 		Shader RTTShader("../res/shaders/RTTVShader.glsl", "../res/shaders/RTTFShader.glsl");
 		Shader R2Shader("../res/shaders/ReductionVShader.glsl", "../res/shaders/Reduction2FShader.glsl");
 		Shader R5Shader("../res/shaders/ReductionVShader.glsl", "../res/shaders/Reduction5FShader.glsl");
+		Shader PTShader("../res/shaders/PassthroughVShader.glsl", "../res/shaders/PassthroughFShader.glsl");
+		Shader PT2Shader("../res/shaders/PTVS2.glsl", "../res/shaders/PTFS2.glsl");
 		
 		// Declare quad
 		GLuint quadVAO, quadVBO;
@@ -226,8 +228,8 @@ public:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 200, 200, 0, GL_DEPTH_COMPONENT, GL_FLOAT, referenceImage);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);	
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);	
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 		// Set up ping
 		GLuint ping;
@@ -242,14 +244,122 @@ public:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 200, 200, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);	
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);	
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthtexture, 0);
+		
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		//glBindTexture(GL_TEXTURE_2D, 0);
+		// Set up pong 
+		GLuint pong;
+		glGenFramebuffers(1, &pong);
+		glBindFramebuffer(GL_FRAMEBUFFER, pong);
+
+		GLuint difftex;
+		glGenTextures(1, &difftex);
+		glActiveTexture(GL_TEXTURE0 + 2);
+		glBindTexture(GL_TEXTURE_2D, difftex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 200, 200, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);	
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, difftex, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		
+		// Set up pang 
+		GLuint pang;
+		glGenFramebuffers(1, &pang);
+		glBindFramebuffer(GL_FRAMEBUFFER, pang);
+
+		GLuint tex100;
+		glGenTextures(1, &tex100);
+		glActiveTexture(GL_TEXTURE0 + 3);
+		glBindTexture(GL_TEXTURE_2D, tex100);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 100, 100, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex100, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		GLuint pung;
+		glGenFramebuffers(1, &pung);
+		glBindFramebuffer(GL_FRAMEBUFFER, pung);
+
+		GLuint tex50;
+		glGenTextures(1, &tex50);
+		glActiveTexture(GL_TEXTURE0 + 4);
+		glBindTexture(GL_TEXTURE_2D, tex50);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 50, 50, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex50, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		
+		GLuint pling;
+		glGenFramebuffers(1, &pling);
+		glBindFramebuffer(GL_FRAMEBUFFER, pling);
+
+		GLuint tex10;
+		glGenTextures(1, &tex10);
+		glActiveTexture(GL_TEXTURE0 + 5);
+		glBindTexture(GL_TEXTURE_2D, tex10);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 10, 10, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex10, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		
+		
+		GLuint plang;
+		glGenFramebuffers(1, &plang);
+		glBindFramebuffer(GL_FRAMEBUFFER, plang);
+
+		GLuint tex2;
+		glGenTextures(1, &tex2);
+		glActiveTexture(GL_TEXTURE0 + 6);
+		glBindTexture(GL_TEXTURE_2D, tex2);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex2, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		
+
+
+		GLuint finalboss;
+		glGenFramebuffers(1, &finalboss);
+		glBindFramebuffer(GL_FRAMEBUFFER, finalboss);
+
+		GLuint tex1;
+		glGenTextures(1, &tex1);
+		glActiveTexture(GL_TEXTURE0 + 7);
+		glBindTexture(GL_TEXTURE_2D, tex1);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex1, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		// No color buffer is drawn to (check if this is even necessary)
-		glDrawBuffer(GL_NONE);
+		//glDrawBuffer(GL_NONE);
 
 		// Check if the ping was set up correctly
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -267,43 +377,166 @@ public:
 		model = glm::scale(model, glm::vec3(1.0f));
 		glm::mat4 proj = glm::perspective(glm::radians(58.59f), 1.0f, 0.05f, 1.0f);
 				
-		 //Send matricies to shader
+		//Send matricies to shader
 		RTTShader.use(); // Check to see if this needs to be called every time
 		RTTShader.setMat4("u_M", model);
 		RTTShader.setMat4("u_P", proj);
 		RTTShader.setFloat("zNear", 0.05f);
 		RTTShader.setFloat("zFar", 1.0f);
-		footModel.Draw(RTTShader);
-		
+
 		while (!glfwWindowShouldClose(window))
 		{
-			//glDisable(GL_DEPTH_TEST);
+			glBindFramebuffer(GL_FRAMEBUFFER, ping);
 			glEnable(GL_DEPTH_TEST);
-			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			glActiveTexture(GL_TEXTURE0 + 1);
 			RTTShader.use();
 			footModel.Draw(RTTShader);
-
-			glBindTexture(GL_TEXTURE_2D, depthtexture);
-			glBindFramebuffer(GL_FRAMEBUFFER, ping);
-			
+		
+			glBindFramebuffer(GL_FRAMEBUFFER, pong);
 			glDisable(GL_DEPTH_TEST);
-
-			// difference
-			//glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, depthtexture);
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			//PTShader.use();
+			//PTShader.setInt("tex", 1);
+			//glBindVertexArray(quadVAO);
+			//glDrawArrays(GL_TRIANGLES, 0, 6);
 
 			screenShader.use();
 			screenShader.setInt("screenTexture", 0);
 			screenShader.setInt("gendepTexture", 1);
 		
 			glBindVertexArray(quadVAO);
-			glBindTexture(GL_TEXTURE_2D, refdepthtex);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		
+			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			//PTShader.use();
+			//PTShader.setInt("tex", 2);
+
+			//glBindVertexArray(quadVAO);
+			//glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, pang);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			R2Shader.use();
+			R2Shader.setInt("tex", 2);
+			R2Shader.setFloat("width", 200.0f);
+			R2Shader.setFloat("height", 200.0f);
+			glBindVertexArray(quadVAO);
+			glDrawArrays(GL_TRIANGLES, 0 , 6);
+
+		
+			glBindFramebuffer(GL_FRAMEBUFFER, pung);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			R2Shader.use();
+			R2Shader.setInt("tex", 3);
+			R2Shader.setFloat("width", 100.0f);
+			R2Shader.setFloat("height", 100.0f);
+			glViewport(0, 0, 100, 100);
+			glBindVertexArray(quadVAO);
+			glDrawArrays(GL_TRIANGLES, 0 , 6);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, pling);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			R5Shader.use();
+			R5Shader.setInt("tex", 4);
+			R5Shader.setFloat("width", 50.0f);
+			R5Shader.setFloat("height", 50.0f);
+			glViewport(0, 0, 50, 50);
+			glBindVertexArray(quadVAO);
+			glDrawArrays(GL_TRIANGLES, 0 , 6);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, plang);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			R5Shader.use();
+			R5Shader.setInt("tex", 5);
+			R5Shader.setFloat("width", 10.0f);
+			R5Shader.setFloat("height", 10.0f);
+			glViewport(0, 0, 10, 10);
+			glBindVertexArray(quadVAO);
+			glDrawArrays(GL_TRIANGLES, 0 , 6);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, finalboss);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			R2Shader.use();
+			R2Shader.setInt("tex", 6);
+			R2Shader.setFloat("width", 2.0f);
+			R2Shader.setFloat("height", 2.0f);
+			glViewport(0, 0, 2, 2);
+			glBindVertexArray(quadVAO);
+			glDrawArrays(GL_TRIANGLES, 0 , 6);
+				
+			glActiveTexture(GL_TEXTURE0 + 7);
+			glBindTexture(GL_TEXTURE_2D, tex1);
+
+			GLubyte* texbuff = new GLubyte[3];
+			GLClearError();
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, texbuff);
+			GLCheckError();
+			std::cout << "Pixel color: " << (int)texbuff[0] << " " << (int)texbuff[1] << " " << (int)texbuff[2] << std::endl;
+			break;
+			//R2Shader.use();
+			//R2Shader.setInt("tex", 2);
+			//R2Shader.setFloat("width", 200.0f);
+			//R2Shader.setFloat("height", 200.0f);
+
+			//glBindVertexArray(quadVAO);
+			//glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			//PTShader.use();
+			//PTShader.setInt("tex", 3);
+
+			//glViewport(0, 0, 200, 200);
+			//glBindVertexArray(quadVAO);
+			//glDrawArrays(GL_TRIANGLES, 0, 6);
+			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			//PTShader.use();
+			//PTShader.setInt("tex", 1);
+
+			//glBindVertexArray(quadVAO);
+			//glDrawArrays(GL_TRIANGLES, 0, 6);
+
+
+			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			////glDrawBuffer(GL_COLOR_ATTACHMENT1);
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			//PTShader.use();
+			//R2Shader.setInt("tex", 2);
+
+			//glBindVertexArray(quadVAO);
+			//glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			//glViewport(0, 0, 100, 100);
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			//PTShader.use();
+			//PTShader.setInt("tex", 3);
+
+			//glBindVertexArray(quadVAO);
+			//glDrawArrays(GL_TRIANGLES, 0, 6);
+
+
+			// generate them mipmaps
+			//glActiveTexture(GL_TEXTURE0 + 2);
+			//glGenerateTextureMipmap(difftex);
+
+			//GLubyte* texbuff = new GLubyte[3];
+			//GLClearError();
+			//glGetTexImage(GL_TEXTURE_2D, 7, GL_RGB, GL_UNSIGNED_BYTE, texbuff);
+			//GLCheckError();
+			//for (int i = 0; i < 3; i++)
+			//{
+			//	std::cout << (int) texbuff[i] << " ";
+			//}
+			//break;
 			// scale to 100 
 			//glActiveTexture(GL_TEXTURE0 + 2);
 			//glBindTexture(GL_TEXTURE_2D, dt2);
@@ -316,9 +549,10 @@ public:
 			//glBindVertexArray(quadVAO);
 			//glBindTexture(GL_TEXTURE_2D, dt2);
 			//glDrawArrays(GL_TRIANGLES, 0, 6);
-
+	
 			glfwSwapBuffers(window);
 			glfwPollEvents();
+			GLCheckError();
 		}
 
 		// Time the PSO without setup
