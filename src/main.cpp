@@ -7,8 +7,8 @@
 
 static const float PI = 3.1415926;
 static const double DEPTH_SCALE = 0.0010000000474974513;
-static const int windowWidth = 640;
-static const int windowHeight = 360;
+static const int windowWidth = 200;
+static const int windowHeight = 200;
 
 float** GenerateMapsFromPoseParameters(int numParams, PoseParameters* poseparams)
 {
@@ -104,8 +104,8 @@ float** GenerateMapsFromPoseParameters(int numParams, PoseParameters* poseparams
 
 		// Save image
 		glReadPixels(0, 0, windowWidth, windowHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthImageFromRenderbuffer);
-		float* croppedDM = CropImage(depthImageFromRenderbuffer, 640, 360, 200, 200);
-		depthImages[i] = croppedDM;
+		//float* croppedDM = CropImage(depthImageFromRenderbuffer, 640, 360, 200, 200);
+		depthImages[i] = depthImageFromRenderbuffer;
 	}
 
 	return depthImages;

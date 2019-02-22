@@ -14,12 +14,12 @@ void main()
 	//FragColor = texture(screenTexture, TexCoords);
 	vec4 ref = texture(screenTexture, TexCoords);
 	vec4 rend = texture(gendepTexture, TexCoords);
-	if (ref.x > rend.x)
+	if (ref.z > rend.z)
 	{
-		FragColor = ref - rend;
+		gl_FragDepth = ref.z - rend.z;
 	}
 	else 
 	{
-		FragColor = rend - ref;
+		gl_FragDepth = rend.z - ref.z;
 	}
 }
