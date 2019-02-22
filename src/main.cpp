@@ -6,9 +6,18 @@
 #include "pso.h"
 
 static const float PI = 3.1415926;
-static const double DEPTH_SCALE = 0.0010000000474974513;
-static const int windowWidth = 200;
-static const int windowHeight = 200;
+static const int windowWidth = 640;
+static const int windowHeight = 480;
+
+float CalculateEnergy(float* depthImage1, float* depthImage2, int imageSize)
+{
+	float energy = 0.0f;
+	for (int i = 0; i < imageSize; i++)
+	{
+		energy = energy + std::abs(depthImage1[i] - depthImage2[i]);
+	}
+	return energy;
+}
 
 float** GenerateMapsFromPoseParameters(int numParams, PoseParameters* poseparams)
 {
@@ -89,7 +98,7 @@ float** GenerateMapsFromPoseParameters(int numParams, PoseParameters* poseparams
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(params.XTranslation, params.YTranslation, params.ZTranslation));
 		model = glm::rotate(glm::rotate(glm::rotate(model, params.XRotation, glm::vec3(1, 0, 0)), params.YRotation, glm::vec3(0, 1, 0)), params.ZRotation, glm::vec3(0, 0, 1));
 		model = glm::scale(model, glm::vec3(1.0f));
-		glm::mat4 proj = glm::perspective(glm::radians(58.59f), 1.0f, zNear, zFar);
+		glm::mat4 proj = glm::perspective(glm::radians(42.0f), 1.333f, zNear, zFar);
 		// Set up shader
 		RTTShader.use();
 		RTTShader.setMat4("u_M", model);
@@ -104,7 +113,6 @@ float** GenerateMapsFromPoseParameters(int numParams, PoseParameters* poseparams
 
 		// Save image
 		glReadPixels(0, 0, windowWidth, windowHeight, GL_DEPTH_COMPONENT, GL_FLOAT, depthImageFromRenderbuffer);
-		//float* croppedDM = CropImage(depthImageFromRenderbuffer, 640, 360, 200, 200);
 		depthImages[i] = depthImageFromRenderbuffer;
 	}
 
@@ -125,7 +133,7 @@ static void WriteToFile(const float* depthBuffer, const int& width, const int& h
 	outfile.close();
 }
 
-static float* ReadFile(const char* location, const int& width, const int& height, const double& depthscale)
+static float* ReadFile(const char* location, const int& width, const int& height)
 {
 	std::ifstream textfile(location);
 
@@ -142,8 +150,7 @@ static float* ReadFile(const char* location, const int& width, const int& height
 		{
 			token = line.substr(0, pos);
 			line.erase(0, pos + delimiter.length());
-			float scaledVal = std::stoi(token) * DEPTH_SCALE;
-			image[index] = (scaledVal > 1.0f) ? 1.0f : scaledVal;
+			image[index] = std::stof(token);
 			index = index + 1;
 		}
 	}
@@ -153,10 +160,8 @@ static float* ReadFile(const char* location, const int& width, const int& height
 
 int main()
 {
-	const char* RefLocation = "../../Depth-Resources/000050.txt";
-	int width = 200;
-	int height = 200;
-	float* readImage = ReadFile(RefLocation, width, height, DEPTH_SCALE);
+	const char* RefLocation = "../../Depth-Resources/ref.txt";
+	float* refImage = ReadFile(RefLocation, windowWidth, windowHeight);
 	PoseParameters params1(-0.18f, 0.05f, -0.62f, 5* PI/8, 1.5 * PI, -PI/4);
 	PoseParameters params2(-0.17f, 0.0f, -0.43f, 5* PI/8 + 0.2, 1.5 * PI + 0.13, -PI/4 + 0.03);
 	PoseParameters params3(-0.05f, 0.2f, -0.72f, 5* PI/8 - 0.1, 1.5 * PI - 0.12, -PI/4 + 0.11);
@@ -167,22 +172,22 @@ int main()
 	float** images = GenerateMapsFromPoseParameters(6, params);
 	for (int i = 0; i < 6; i++)
 	{
-		std::cout << "Image " << i << ": " << CalculateEnergy(readImage, images[i], width*height) << std::endl;
+		std::cout << "Image " << i << ": " << CalculateEnergy(refImage, images[i], windowWidth*windowHeight) << std::endl;
 	}
 
 	PSO pso;
-	PoseParameters optimizedParams = pso.Run(params, readImage, 6, 30, 0);
+	PoseParameters optimizedParams = pso.Run(params, refImage, 6, 30, 0);
 	std::cout << optimizedParams.XTranslation << " " << optimizedParams.YTranslation << " " << optimizedParams.ZTranslation << " " << optimizedParams.XRotation << " " << optimizedParams.YRotation << " " << optimizedParams.ZRotation << std::endl;
 	
 	for (int i = 0; i < 6; i++)
 	{
 		char outputPath[50];
 		sprintf(outputPath, "%s%d%s", "/home/eric/Dev/Depth-Resources/dm", i, ".txt");
-		WriteToFile(images[i], 200, 200, outputPath);
+		WriteToFile(images[i], 640, 480, outputPath);
 	}
-	//PoseParameters oppa[1] = {optimizedParams};
-	//float** image = GenerateMapsFromPoseParameters(1, oppa);
-	//const char* optimgoutput = "/home/eric/Dev/Depth-Resources/opt.txt";
-	//WriteToFile(image[0], 200, 200, optimgoutput);
-	//std::cout << "Opt: " << CalculateEnergy(readImage, image[0], width*height);
+	PoseParameters oppa[1] = {optimizedParams};
+	float** image = GenerateMapsFromPoseParameters(1, oppa);
+	const char* optimgoutput = "/home/eric/Dev/Depth-Resources/opt.txt";
+	WriteToFile(image[0], 640, 480, optimgoutput);
+	std::cout << "Opt: " << CalculateEnergy(refImage, image[0], windowWidth*windowHeight);
 }
