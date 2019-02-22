@@ -52,20 +52,6 @@ float* CropImage(float* originalImage, const int& originalWidth, const int& orig
 	return croppedImage;
 }
 
-static void WriteToFile2(const float* depthBuffer, const int& width, const int& height, const char* destination) 
-{
-	std::ofstream outfile(destination);
-	for (int i=0; i < height; i++) 
-	{
-		for (int j = 0; j < width; j++)
-		{
-			outfile << depthBuffer[i*width+j] << " ";
-		}
-		outfile << std::endl;
-	}
-	outfile.close();
-}
-
 float CalculateEnergy(float* depthImage1, float* depthImage2, int imageSize)
 {
 	float energy = 0.0f;
@@ -171,6 +157,9 @@ public:
 		{
 			particles[i].Position = parameterList[i];
 		}
+
+		// Set up OpenGL stuff
+		
 	}
 
 	PoseParameters Run()
@@ -214,12 +203,11 @@ public:
 		};
 
 		// Get and set up shaders
-		Shader screenShader("../res/shaders/TexVertexShader.glsl", "../res/shaders/TexFragmentShader.glsl");
+		Shader SubtractionShader("../res/shaders/PassThroughQuadVertexShader.glsl", "../res/shaders/SubtractionFragmentShader.glsl");
 		Shader RTTShader("../res/shaders/RTTVShader.glsl", "../res/shaders/RTTFShader.glsl");
-		Shader R2Shader("../res/shaders/ReductionVShader.glsl", "../res/shaders/Reduction2FShader.glsl");
-		Shader R5Shader("../res/shaders/ReductionVShader.glsl", "../res/shaders/Reduction5FShader.glsl");
-		Shader PTShader("../res/shaders/PassthroughVShader.glsl", "../res/shaders/PassthroughFShader.glsl");
-		Shader PT2Shader("../res/shaders/PTVS2.glsl", "../res/shaders/PTFS2.glsl");
+		Shader R2Shader("../res/shaders/PassThroughQuadVertexShader.glsl", "../res/shaders/Reduction2FShader.glsl");
+		Shader R5Shader("../res/shaders/PassThroughQuadVertexShader.glsl", "../res/shaders/Reduction5FShader.glsl");
+		Shader PTShader("../res/shaders/PTVS.glsl", "../res/shaders/PTFS.glsl");
 		
 		// Declare quad
 		GLuint quadVAO, quadVBO;
@@ -381,27 +369,27 @@ public:
 		RTTShader.setFloat("zNear", 0.05f);
 		RTTShader.setFloat("zFar", 1.0f);
 
-		while (!glfwWindowShouldClose(window))
+		glEnable(GL_DEPTH_TEST);
+		for (int i = 0; i < 10; i++)
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, ping);
-			glEnable(GL_DEPTH_TEST);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT);
 
 			RTTShader.use();
 			footModel.Draw(RTTShader);
 		
 			glBindFramebuffer(GL_FRAMEBUFFER, pong);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT);
 
-			screenShader.use();
-			screenShader.setInt("screenTexture", 0);
-			screenShader.setInt("gendepTexture", 1);
+			SubtractionShader.use();
+			SubtractionShader.setInt("screenTexture", 0);
+			SubtractionShader.setInt("gendepTexture", 1);
 		
 			glBindVertexArray(quadVAO);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 
 			glBindFramebuffer(GL_FRAMEBUFFER, pang);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT);
 			R2Shader.use();
 			R2Shader.setInt("tex", 2);
 			R2Shader.setFloat("width", 200.0f);
@@ -410,7 +398,7 @@ public:
 			glDrawArrays(GL_TRIANGLES, 0 , 6);
 		
 			glBindFramebuffer(GL_FRAMEBUFFER, pung);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT);
 			R2Shader.use();
 			R2Shader.setInt("tex", 3);
 			R2Shader.setFloat("width", 100.0f);
@@ -420,7 +408,7 @@ public:
 			glDrawArrays(GL_TRIANGLES, 0 , 6);
 
 			glBindFramebuffer(GL_FRAMEBUFFER, pling);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT);
 			R5Shader.use();
 			R5Shader.setInt("tex", 4);
 			R5Shader.setFloat("width", 50.0f);
@@ -428,9 +416,17 @@ public:
 			glViewport(0, 0, 50, 50);
 			glBindVertexArray(quadVAO);
 			glDrawArrays(GL_TRIANGLES, 0 , 6);
+			
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			PTShader.use();
+			PTShader.setInt("tex", 5);
+			glViewport(0, 0, 200, 200);
+			glBindVertexArray(quadVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
 
 			glBindFramebuffer(GL_FRAMEBUFFER, plang);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT);
 			R5Shader.use();
 			R5Shader.setInt("tex", 5);
 			R5Shader.setFloat("width", 10.0f);
@@ -440,7 +436,7 @@ public:
 			glDrawArrays(GL_TRIANGLES, 0 , 6);
 
 			glBindFramebuffer(GL_FRAMEBUFFER, finalboss);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT);
 			R2Shader.use();
 			R2Shader.setInt("tex", 6);
 			R2Shader.setFloat("width", 2.0f);
@@ -448,18 +444,20 @@ public:
 			glViewport(0, 0, 2, 2);
 			glBindVertexArray(quadVAO);
 			glDrawArrays(GL_TRIANGLES, 0 , 6);
-				
-			glActiveTexture(GL_TEXTURE0 + 7);
-			glBindTexture(GL_TEXTURE_2D, tex1);
+			//	
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			PTShader.use();
+			PTShader.setInt("tex", 7);
+			glViewport(0, 0, 200, 200);
+			glBindVertexArray(quadVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
 			float* currentdt = new float[1];
-			glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, currentdt);
+			glGetTextureImage(tex1, 0, GL_DEPTH_COMPONENT, GL_FLOAT, sizeof(float), currentdt);
+			//glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, currentdt);
 
 			std::cout << "Final depth value: " << currentdt[0] << std::endl;
-			break;
 	
-			glfwSwapBuffers(window);
-			glfwPollEvents();
-			GLCheckError();
 		}
 
 		// Time the PSO without setup

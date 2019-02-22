@@ -169,11 +169,13 @@ int main()
 	{
 		std::cout << "Image " << i << ": " << CalculateEnergy(readImage, images[i], width*height) << std::endl;
 	}
-	auto start = std::chrono::high_resolution_clock::now();
+
 	PSO pso(params, readImage, 6, 30, 200, 200);
 	PoseParameters optimizedParams = pso.Run();
-	auto end = std::chrono::high_resolution_clock::now();
-	std::cout << "TOTAL TIME IN MILLISECONDS: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
+	//PoseParameters optimizedParams2 = pso.Run();
+	//PoseParameters optimizedParams3 = pso.Run();
+	//PoseParameters optimizedParams4 = pso.Run();
+	//PoseParameters optimizedParams5 = pso.Run();
 	std::cout << optimizedParams.XTranslation << " " << optimizedParams.YTranslation << " " << optimizedParams.ZTranslation << " " << optimizedParams.XRotation << " " << optimizedParams.YRotation << " " << optimizedParams.ZRotation << std::endl;
 	
 	for (int i = 0; i < 6; i++)

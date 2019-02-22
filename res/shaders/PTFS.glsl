@@ -12,5 +12,6 @@ void main()
 {
 	FragColor = texture(tex, TexCoords);
 	//int x = int(TexCoords.x * 199.0);
-	//FragColor = vec4(TexCoords.y, TexCoords.y, TexCoords.y, 1.0);
+	//	//FragColor = vec4(TexCoords.y, TexCoords.y, TexCoords.y, 1.0);
+	//	}}
 }
