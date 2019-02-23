@@ -275,7 +275,7 @@ class PSO {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tex1x1, 0);
 		}
 
-		PoseParameters Run(PoseParameters* parameterList, float* refImg, int numParticles, int iters, int choice)
+		PoseParameters Run(PoseParameters* parameterList, float* refImg, int numParticles, int iters)
 		{	
 			// Load reference image into texture 0
 			glGenTextures(1, &refdepthtex);

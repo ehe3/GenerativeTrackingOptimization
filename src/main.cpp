@@ -176,7 +176,7 @@ int main()
 	}
 
 	PSO pso;
-	PoseParameters optimizedParams = pso.Run(params, refImage, 6, 30, 0);
+	PoseParameters optimizedParams = pso.Run(params, refImage, 6, 10000);
 	std::cout << optimizedParams.XTranslation << " " << optimizedParams.YTranslation << " " << optimizedParams.ZTranslation << " " << optimizedParams.XRotation << " " << optimizedParams.YRotation << " " << optimizedParams.ZRotation << std::endl;
 	
 	for (int i = 0; i < 6; i++)
