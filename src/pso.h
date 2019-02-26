@@ -513,7 +513,7 @@ class PSO {
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				glClear(GL_DEPTH_BUFFER_BIT);
 				PTShader.use();
-				PTShader.setInt("tex", 9);
+				PTShader.setInt("tex", 10);
 				glBindVertexArray(quadVAO);
 				glViewport(0, 0, NumParticles*640, 480);
 				glDrawArrays(GL_TRIANGLES, 0, 6);
