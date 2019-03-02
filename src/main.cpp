@@ -1,13 +1,14 @@
 #include <string>
 #include <fstream>
 #include <chrono>
+#include <random>
 #define STB_IMAGE_IMPLEMENTATION
 
 #include "pso.h"
 
 static const float PI = 3.1415926;
-static const int windowWidth = 640;
-static const int windowHeight = 480;
+static const int windowWidth = 128;
+static const int windowHeight = 128;
 
 float CalculateEnergy(float* depthImage1, float* depthImage2, int imageSize)
 {
@@ -45,8 +46,8 @@ float** GenerateMapsFromPoseParameters(int numParams, PoseParameters* poseparams
 		return NULL;
 
 	// Get and set up the shaders
-	const char* RTTVertexShaderPath = "../res/shaders/RTTVShader.glsl";
-	const char* RTTFragmentShaderPath = "../res/shaders/RTTFShader.glsl";
+	const char* RTTVertexShaderPath = "../res/shaders/MainTestVertexShader.glsl";
+	const char* RTTFragmentShaderPath = "../res/shaders/MainTestFragmentShader.glsl";
 
 	Shader RTTShader(RTTVertexShaderPath, RTTFragmentShaderPath);
 
@@ -98,11 +99,12 @@ float** GenerateMapsFromPoseParameters(int numParams, PoseParameters* poseparams
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(params.XTranslation, params.YTranslation, params.ZTranslation));
 		model = glm::rotate(glm::rotate(glm::rotate(model, params.XRotation, glm::vec3(1, 0, 0)), params.YRotation, glm::vec3(0, 1, 0)), params.ZRotation, glm::vec3(0, 0, 1));
 		model = glm::scale(model, glm::vec3(1.0f));
-		glm::mat4 proj = glm::perspective(glm::radians(42.0f), 1.333f, zNear, zFar);
+		glm::mat4 proj = glm::perspective(glm::radians(42.0f), 1.0f, zNear, zFar);
 		// Set up shader
 		RTTShader.use();
 		RTTShader.setMat4("u_M", model);
 		RTTShader.setMat4("u_P", proj);
+		RTTShader.setMat4("u_P_F", proj);
 		RTTShader.setFloat("zNear", zNear);
 		RTTShader.setFloat("zFar", zFar);
 		footModel.Draw(RTTShader);
@@ -160,34 +162,56 @@ static float* ReadFile(const char* location, const int& width, const int& height
 
 int main()
 {
-	const char* RefLocation = "../../Depth-Resources/ref.txt";
-	float* refImage = ReadFile(RefLocation, windowWidth, windowHeight);
-	PoseParameters params1(-0.18f, 0.05f, -0.62f, 5* PI/8, 1.5 * PI, -PI/4);
-	PoseParameters params2(-0.17f, 0.0f, -0.43f, 5* PI/8 + 0.2, 1.5 * PI + 0.13, -PI/4 + 0.03);
-	PoseParameters params3(-0.05f, 0.2f, -0.72f, 5* PI/8 - 0.1, 1.5 * PI - 0.12, -PI/4 + 0.11);
-	PoseParameters params4(-0.13f, 0.08f, -0.81f, 5* PI/8 - 0.5, 1.5 * PI + 0.43, -PI/4 - 0.02);
-	PoseParameters params5(0.0f, 0.25f, -0.63f, 5* PI/8 + 0.4, 1.5 * PI - 0.02, -PI/4 - 0.24);
-	PoseParameters params6(-0.04f, 0.13f, -0.62f, PI/2, 1.5 * PI - 0.12, -PI/4 - 0.12);
-	PoseParameters params[6] = {params1, params2, params3, params4, params5, params6};
-	float** images = GenerateMapsFromPoseParameters(6, params);
-	for (int i = 0; i < 6; i++)
+	int totalParticles = 120;
+	float* refImage = ReadFile("../../Depth-Resources/ref128.txt", windowWidth, windowHeight);
+	float* flippedRefImage = ReadFile("../../Depth-Resources/ref128f.txt", windowWidth, windowHeight);
+	
+	std::random_device rd;
+	std::mt19937 gen(rd());
+
+	float tx = -0.17f; float ty = 0.0f; float tz = -0.43f; 
+	float rx = 5*PI/8+0.2; float ry=1.5*PI+0.13; float rz=-PI/4+0.03;
+	float st = 0.2; float sr = 1.0;
+
+	std::uniform_real_distribution<float> transx(tx-st,tx+st);
+	std::uniform_real_distribution<float> transy(ty-st,ty+st);
+	std::uniform_real_distribution<float> transz(tz-st,tz+st);
+	std::uniform_real_distribution<float> rotx(rx-sr,rx+sr);
+	std::uniform_real_distribution<float> roty(ry-sr,ry+sr);
+	std::uniform_real_distribution<float> rotz(rz-sr,rz+sr);
+
+	PoseParameters params[totalParticles];
+	for (int i = 0; i < totalParticles; i++)
+	{
+		params[i] = PoseParameters(transx(gen), transy(gen), transz(gen), rotx(gen), roty(gen), rotz(gen));	
+		params[i].Print();
+	}
+	//PoseParameters params1(-0.18f, 0.05f, -0.62f, 5* PI/8, 1.5 * PI, -PI/4);
+	//PoseParameters params2(-0.17f, 0.0f, -0.43f, 5* PI/8 + 0.2, 1.5 * PI + 0.13, -PI/4 + 0.03);
+	//PoseParameters params3(-0.05f, 0.2f, -0.72f, 5* PI/8 - 0.1, 1.5 * PI - 0.12, -PI/4 + 0.11);
+	//PoseParameters params4(-0.13f, 0.08f, -0.81f, 5* PI/8 - 0.5, 1.5 * PI + 0.43, -PI/4 - 0.02);
+	//PoseParameters params5(0.0f, 0.25f, -0.63f, 5* PI/8 + 0.4, 1.5 * PI - 0.02, -PI/4 - 0.24);
+	//PoseParameters params6(-0.04f, 0.13f, -0.62f, PI/2, 1.5 * PI - 0.12, -PI/4 - 0.12);
+	//PoseParameters params[6] = {params1, params2, params3, params4, params5, params6};
+	float** images = GenerateMapsFromPoseParameters(totalParticles, params);
+	for (int i = 0; i < totalParticles; i++)
 	{
 		std::cout << "Image " << i << ": " << CalculateEnergy(refImage, images[i], windowWidth*windowHeight) << std::endl;
 	}
 
-	PSO pso(6);
-	PoseParameters optimizedParams = pso.Run(params, refImage, 30);
+	PSO pso(totalParticles);
+	PoseParameters optimizedParams = pso.Run(params, flippedRefImage, 30);
 	std::cout << optimizedParams.XTranslation << " " << optimizedParams.YTranslation << " " << optimizedParams.ZTranslation << " " << optimizedParams.XRotation << " " << optimizedParams.YRotation << " " << optimizedParams.ZRotation << std::endl;
 	
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < totalParticles; i++)
 	{
 		char outputPath[50];
 		sprintf(outputPath, "%s%d%s", "/home/eric/Dev/Depth-Resources/dm", i, ".txt");
-		WriteToFile(images[i], 640, 480, outputPath);
+		WriteToFile(images[i], 128, 128, outputPath);
 	}
 	PoseParameters oppa[1] = {optimizedParams};
 	float** image = GenerateMapsFromPoseParameters(1, oppa);
 	const char* optimgoutput = "/home/eric/Dev/Depth-Resources/opt.txt";
-	WriteToFile(image[0], 640, 480, optimgoutput);
-	std::cout << "Opt: " << CalculateEnergy(refImage, image[0], windowWidth*windowHeight);
+	WriteToFile(image[0], 128, 128, optimgoutput);
+	std::cout << "Opt: " << CalculateEnergy(refImage, image[0], windowWidth*windowHeight) << std::endl;
 }
