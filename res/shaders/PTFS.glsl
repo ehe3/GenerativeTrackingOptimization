@@ -1,4 +1,4 @@
-#version 310 es
+#version 460 core
 
 precision mediump float;
 

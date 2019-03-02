@@ -106,6 +106,7 @@ class PSO {
         glm::mat4 ProjMat;
         Shader RepeatShader, SubtractionShader, RTTShader, R2Shader, PTShader;
         Model footHigh, footMid, footLow;
+				Model footModel;
         // quads, textures, and buffers
         GLuint quadVAO, quadVBO, repeatQuadVAO, repeatQuadVBO, refdepthtex, peng, repeattex, ping, depthtexture, pong, difftex, pang, tex64, pung, tex32, pling, tex16, plang, tex8, plong, tex4, plung, tex2, pleng, tex1;
         // instance buffers
@@ -165,6 +166,7 @@ class PSO {
 						footHigh = Model("../res/models/foot_1.obj");
 						footMid = Model("../res/models/foot_3.obj");
 						footLow = Model("../res/models/foot_5.obj");
+						footModel = Model("../res/foot.obj");
 
             float translations[numParticles];
             for (int i = 0; i < NumParticles; i++)
@@ -407,75 +409,6 @@ class PSO {
                 particles[i].Position = parameterList[i];
             }
 
-						// BEGIN TESTING CODE
-						
-            //glm::mat4* Movements = new glm::mat4[NumParticles];
-            //for (int i = 0; i < NumParticles; i++)
-            //{
-            //    PoseParameters currparam = particles[i].Position;
-            //    // Set up MVP matricies
-            //    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(currparam.XTranslation, currparam.YTranslation, currparam.ZTranslation));
-            //    model = glm::rotate(glm::rotate(glm::rotate(model, currparam.XRotation, glm::vec3(1, 0, 0)), currparam.YRotation, glm::vec3(0, 1, 0)), currparam.ZRotation, glm::vec3(0, 0, 1));
-            //    Movements[i] = model;	
-            //}
-
-            //glNamedBufferSubData(transformationInstanceBuffer, 0, NumParticles*sizeof(glm::mat4), &Movements[0]);
-
-
-						//while (!glfwWindowShouldClose(window))
-						//{
-            //  RepeatShader.use();
-            //  RepeatShader.setInt("tex", 0);
-            //  glBindFramebuffer(GL_FRAMEBUFFER, peng);
-            //  glClear(GL_DEPTH_BUFFER_BIT);
-            //  glBindVertexArray(repeatQuadVAO);
-            //  glDrawArrays(GL_TRIANGLES, 0, 6);
-
-            //  glEnable(GL_DEPTH_TEST);
-            //  //Send matricies to shader
-            //  RTTShader.use(); 
-            //  RTTShader.setMat4("u_P", ProjMat);
-            //  RTTShader.setInt("instances", NumParticles);
-            //  RTTShader.setFloat("zNear", 0.05f);
-            //  RTTShader.setFloat("zFar", 1.0f);
-
-            //  glBindFramebuffer(GL_FRAMEBUFFER, ping);
-            //  glClear(GL_DEPTH_BUFFER_BIT);
-
-            //  RTTShader.use();
-            //  Mesh footMesh = footModel.meshes[0];
-            //  glBindVertexArray(footMesh.VAO);
-            //  glDrawElementsInstanced(GL_TRIANGLES, footMesh.indices.size(), GL_UNSIGNED_INT, 0, NumParticles);
-
-            //  glBindFramebuffer(GL_FRAMEBUFFER, pong);
-            //  glClear(GL_DEPTH_BUFFER_BIT);
-            //  SubtractionShader.use();
-            //  SubtractionShader.setInt("screenTexture", 1);
-            //  SubtractionShader.setInt("gendepTexture", 2);
-            //  glBindVertexArray(quadVAO);
-            //  glDrawArrays(GL_TRIANGLES, 0, 6);
-
-						//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-						//	glClear(GL_DEPTH_BUFFER_BIT);
-						//	PTShader.use();
-						//	PTShader.setInt("tex", 3);
-						//	glBindVertexArray(quadVAO);
-						//	glDrawArrays(GL_TRIANGLES, 0, 6);
-						//
-						//	glfwSwapBuffers(window);
-						//	glfwPollEvents();
-						//}
-
-
-
-
-
-
-
-
-						// END TESTING CODE
-
-
             // Time the PSO without setup
             auto start = std::chrono::high_resolution_clock::now();
             // Setup finished, start the particle swarm!
@@ -515,9 +448,8 @@ class PSO {
                 glClear(GL_DEPTH_BUFFER_BIT);
 
                 RTTShader.use();
-                Mesh footMesh = footModel.meshes[0];
-                glBindVertexArray(footMesh.VAO);
-                glDrawElementsInstanced(GL_TRIANGLES, footMesh.indices.size(), GL_UNSIGNED_INT, 0, NumParticles);
+                glBindVertexArray(footModel.meshes[0].VAO);
+                glDrawElementsInstanced(GL_TRIANGLES, footModel.meshes[0].indices.size(), GL_UNSIGNED_INT, 0, NumParticles);
 
                 glBindFramebuffer(GL_FRAMEBUFFER, pong);
                 glClear(GL_DEPTH_BUFFER_BIT);
@@ -628,14 +560,12 @@ class PSO {
                     PoseParameters personalVelocity = (particles[p].BestPosition - particles[p].Position)*CognitiveConst*r1;
 										PoseParameters socialVelocity = (GlobalBestPosition - particles[p].Position)*SocialConst*r2;
 										particles[p].Velocity = particles[p].Velocity + (personalVelocity + socialVelocity)*ConstrictionConst;
-										//particles[p].Velocity.Assuage(0.05, 0.05, 0.05, 0.1, 0.1, 0.1);
-										//std::cout << "velocity for particle: " << p << ": " << std::endl; particles[p].Velocity.Print();
                     particles[p].Position = particles[p].Position + particles[p].Velocity; 
                 }
             }
 
             auto end = std::chrono::high_resolution_clock::now();
-            //std::cout << "Time it took for PSO to execute without OpenGL setup is: " << std::chrono::duration_cast<std::chrono::milliseconds> (end-start).count() << std::endl;
+            std::cout << "Time it took for PSO to execute without OpenGL setup is: " << std::chrono::duration_cast<std::chrono::milliseconds> (end-start).count() << std::endl;
             return GlobalBestPosition;
         }
 };

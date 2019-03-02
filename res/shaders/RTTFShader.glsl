@@ -1,4 +1,4 @@
-#version 310 es
+#version 460 core
 
 precision mediump float;
 
@@ -12,8 +12,8 @@ out vec4 FragColor;
 
 void main()
 {
-	float lowerBound = 640.0*float(instanceid);
-	float upperBound = lowerBound+640.0;
+	float lowerBound = 128.0*float(instanceid);
+	float upperBound = lowerBound+128.0;
 	if ((gl_FragCoord.x <	lowerBound) || (gl_FragCoord.x > upperBound)) {
 		discard;
 	}

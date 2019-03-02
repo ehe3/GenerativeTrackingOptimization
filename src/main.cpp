@@ -162,7 +162,7 @@ static float* ReadFile(const char* location, const int& width, const int& height
 
 int main()
 {
-	int totalParticles = 120;
+	int totalParticles = 9;
 	float* refImage = ReadFile("../../Depth-Resources/ref128.txt", windowWidth, windowHeight);
 	float* flippedRefImage = ReadFile("../../Depth-Resources/ref128f.txt", windowWidth, windowHeight);
 	
@@ -171,7 +171,7 @@ int main()
 
 	float tx = -0.17f; float ty = 0.0f; float tz = -0.43f; 
 	float rx = 5*PI/8+0.2; float ry=1.5*PI+0.13; float rz=-PI/4+0.03;
-	float st = 0.2; float sr = 1.0;
+	float st = 0.1; float sr = 0.5;
 
 	std::uniform_real_distribution<float> transx(tx-st,tx+st);
 	std::uniform_real_distribution<float> transy(ty-st,ty+st);

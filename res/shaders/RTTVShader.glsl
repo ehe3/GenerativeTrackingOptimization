@@ -1,4 +1,4 @@
-#version 310 es
+#version 460 core
 
 layout(location = 0) in vec4 aPos;
 layout(location = 5) in float aOffset;
