@@ -1,8 +1,8 @@
 #version 460 core
 
 layout(location = 0) in vec4 aPos;
-layout(location = 5) in float aOffset;
-layout(location = 6) in mat4 instanceMatrix;
+layout(location = 3) in float aOffset;
+layout(location = 4) in mat4 instanceMatrix;
 
 uniform int instances;
 uniform mat4 u_M;

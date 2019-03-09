@@ -5,3 +5,5 @@ res/foot.obj
 res/foot.mtl
 res/skin.png
 compile_commands.json
+res/models/air-max
+res/foot_full.dae
