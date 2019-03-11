@@ -35,10 +35,13 @@ struct PoseParameters
 		float XRotation;
 		float YRotation;
 		float ZRotation;
+		float ToeXRot;
+		float LegXRot;
+		float LegZRot;
 
-		PoseParameters() : XTranslation{0.0f}, YTranslation{0.0f}, ZTranslation{0.0f}, XRotation{0.0f}, YRotation{0.0f}, ZRotation{0.0f} {}
+		PoseParameters() : XTranslation{0.0f}, YTranslation{0.0f}, ZTranslation{0.0f}, XRotation{0.0f}, YRotation{0.0f}, ZRotation{0.0f}, ToeXRot{0.0f}, LegXRot{0.0f}, LegZRot{0.0f} {}
 
-		PoseParameters(float xtrans, float ytrans, float ztrans, float xrot, float yrot, float zrot) : XTranslation{xtrans}, YTranslation{ytrans}, ZTranslation{ztrans}, XRotation{xrot}, YRotation{yrot}, ZRotation{zrot} {}
+		PoseParameters(float xtrans, float ytrans, float ztrans, float xrot, float yrot, float zrot, float toexrot, float legxrot, float legzrot) : XTranslation{xtrans}, YTranslation{ytrans}, ZTranslation{ztrans}, XRotation{xrot}, YRotation{yrot}, ZRotation{zrot}, ToeXRot{toexrot}, LegXRot{legxrot}, LegZRot{legzrot} {}
 
 		PoseParameters(const PoseParameters &params)
 		{
@@ -48,21 +51,24 @@ struct PoseParameters
 			XRotation = params.XRotation;
 			YRotation = params.YRotation;
 			ZRotation = params.ZRotation;
+			ToeXRot = params.ToeXRot;
+			LegXRot = params.LegXRot;
+			LegZRot = params.LegZRot;
 		}
 
 		PoseParameters operator+(PoseParameters const &obj) const
 		{
-			return PoseParameters(XTranslation + obj.XTranslation, YTranslation + obj.YTranslation, ZTranslation + obj.ZTranslation, XRotation + obj.XRotation, YRotation + obj.YRotation, ZRotation + obj.ZRotation);	
+			return PoseParameters(XTranslation + obj.XTranslation, YTranslation + obj.YTranslation, ZTranslation + obj.ZTranslation, XRotation + obj.XRotation, YRotation + obj.YRotation, ZRotation + obj.ZRotation, ToeXRot + obj.ToeXRot, LegXRot + obj.LegXRot, LegZRot + obj.LegZRot);	
 		}
 
 		PoseParameters operator-(PoseParameters const &obj) const
 		{
-			return PoseParameters(XTranslation - obj.XTranslation, YTranslation - obj.YTranslation, ZTranslation - obj.ZTranslation, XRotation - obj.XRotation, YRotation - obj.YRotation, ZRotation - obj.ZRotation);	
+			return PoseParameters(XTranslation - obj.XTranslation, YTranslation - obj.YTranslation, ZTranslation - obj.ZTranslation, XRotation - obj.XRotation, YRotation - obj.YRotation, ZRotation - obj.ZRotation, ToeXRot - obj.ToeXRot, LegXRot - obj.LegXRot, LegZRot - LegZRot);	
 		}
 
 		PoseParameters operator*(float c)
 		{
-			return PoseParameters(c * XTranslation, c * YTranslation, c * ZTranslation, c * XRotation, c * YRotation, c * ZRotation);
+			return PoseParameters(c * XTranslation, c * YTranslation, c * ZTranslation, c * XRotation, c * YRotation, c * ZRotation, c * ToeXRot, c * LegXRot, c * LegZRot);
 		}
 
 		void Assuage(float xT=0.01, float yT=0.01, float zT=0.01, float xR=0.05, float yR=0.05, float zR=0.05)
@@ -75,10 +81,17 @@ struct PoseParameters
 			ZRotation = ZRotation > zR ? zR : ZRotation < -zR ? -zR : ZRotation;
 		}
 
+		void AssuagePosition(float toeXMin=glm::radians(-15.0f), float toeXMax=glm::radians(45.0f), float legXMin=glm::radians(-20.0f), float legXMax=glm::radians(45.0f), float legZMin=glm::radians(-45.0f), float legZMax=glm::radians(45.0f))
+		{
+			ToeXRot = ToeXRot < toeXMin ? toeXMin : ToeXRot > toeXMax ? toeXMax : ToeXRot;
+			LegXRot = LegXRot < legXMin ? legXMin : LegXRot > legXMax ? legXMax : LegXRot;
+			LegZRot = LegZRot < legZMin ? legZMin : LegZRot > legZMax ? legZMax : LegZRot;
+		}
+
 		// For debugging only
 		void Print()
 		{
-			std::cout << "XTranslation: " << XTranslation << " YTranslation: " << YTranslation << " ZTranslation: " << ZTranslation << " XRotation: " << XRotation << " YRotation: " << YRotation << " ZRotation: " << ZRotation << std::endl;
+			std::cout << "XTranslation: " << XTranslation << " YTranslation: " << YTranslation << " ZTranslation: " << ZTranslation << " XRotation: " << XRotation << " YRotation: " << YRotation << " ZRotation: " << ZRotation << " ToeXRot: " << ToeXRot << " LegXRot: " << LegXRot << " LegZRot: " << LegZRot << std::endl;
 		}
 };
 
@@ -104,12 +117,13 @@ class PSO {
 		// OpenGL vars
 		GLFWwindow* window;
 		glm::mat4 ProjMat;
+		glm::mat4 MeshToBoneToe, MeshToBoneLeg, BoneToMeshToe, BoneToMeshLeg;
 		Shader RepeatShader, SubtractionShader, RTTShader, R2Shader, PTShader;
 		SkeletonModel footSkeleton;
 		// quads, textures, and buffers
 		GLuint quadVAO, quadVBO, repeatQuadVAO, repeatQuadVBO, refdepthtex, peng, repeattex, ping, depthtexture, pong, difftex, pang, tex64, pung, tex32, pling, tex16, plang, tex8, plong, tex4, plung, tex2, pleng, tex1;
 		// instance buffers
-		GLuint instanceVBO, transformationInstanceBuffer;
+		GLuint instanceVBO, transformationInstanceBuffer, rottoeVB, rotlegVB;
 
 	public:
 		PSO(int numParticles, float CogConst=2.8, float SocConst=1.3) : 
@@ -124,6 +138,7 @@ class PSO {
 			{
 				std::cerr << "WARNING: Optimization constants too small" << std::endl;
 			}
+			ConstrictionConst = 2.0f / std::abs(2.0f - Phi - sqrt(Phi*Phi-4*Phi));
 			
 			// Initialize GLFW
 			if (!glfwInit())
@@ -142,7 +157,7 @@ class PSO {
 
 			// Make the window's context current and then hide it
 			glfwMakeContextCurrent(window);
-			//glfwHideWindow(window);
+			glfwHideWindow(window);
 
 			// Initialize GLEW
 			glewExperimental = true;
@@ -160,8 +175,12 @@ class PSO {
 			R2Shader = Shader("../res/shaders/PassThroughQuadVertexShader.glsl", "../res/shaders/Reduction2FShader.glsl");
 			PTShader = Shader("../res/shaders/PTVS.glsl", "../res/shaders/PTFS.glsl");
 
-			// Load the skeleton
+			// Load the skeleton and associated bone matrices
 			footSkeleton = SkeletonModel("../res/foot_full.dae");	
+			MeshToBoneLeg = footSkeleton.meshes[0].offsetMatricies[0];
+			MeshToBoneToe = footSkeleton.meshes[0].offsetMatricies[2];
+			BoneToMeshLeg = glm::inverse(MeshToBoneLeg);
+			BoneToMeshToe = glm::inverse(MeshToBoneToe);	
 
 			float translations[numParticles];
 			for (int i = 0; i < NumParticles; i++)
@@ -175,34 +194,74 @@ class PSO {
 			glBufferData(GL_ARRAY_BUFFER, sizeof(float)*NumParticles, &translations[0], GL_STATIC_DRAW);
 
 			glBindVertexArray(footSkeleton.meshes[0].VAO);
-			glEnableVertexAttribArray(3);
-			glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+			glEnableVertexAttribArray(2);
+			glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glVertexAttribDivisor(3, 1);
+			glVertexAttribDivisor(2, 1);
 
+			GLsizei vec4Size = sizeof(glm::vec4);
 			// set up the instance VBO for model matricies
 			glGenBuffers(1, &transformationInstanceBuffer);
 			glBindBuffer(GL_ARRAY_BUFFER, transformationInstanceBuffer);
 			glBufferData(GL_ARRAY_BUFFER, NumParticles*sizeof(glm::mat4), nullptr, GL_STATIC_DRAW);
 
 			glBindVertexArray(footSkeleton.meshes[0].VAO);
-			GLsizei vec4Size = sizeof(glm::vec4);
 
+			glEnableVertexAttribArray(3);
+			glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)0);
 			glEnableVertexAttribArray(4);
-			glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)0);
+			glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(vec4Size));
 			glEnableVertexAttribArray(5);
-			glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(vec4Size));
+			glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(2*vec4Size));
 			glEnableVertexAttribArray(6);
-			glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(2*vec4Size));
-			glEnableVertexAttribArray(7);
-			glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(3*vec4Size));
+			glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(3*vec4Size));
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glVertexAttribDivisor(3, 1);
 			glVertexAttribDivisor(4, 1);
 			glVertexAttribDivisor(5, 1);
 			glVertexAttribDivisor(6, 1);
-			glVertexAttribDivisor(7, 1);
 
-			glBindVertexArray(0);
+			// set up the instance VBO for toe matricies
+			glGenBuffers(1, &rottoeVB);
+			glBindBuffer(GL_ARRAY_BUFFER, rottoeVB);
+			glBufferData(GL_ARRAY_BUFFER, NumParticles*sizeof(glm::mat4), nullptr, GL_STATIC_DRAW);
+
+			glBindVertexArray(footSkeleton.meshes[0].VAO);
+
+			glEnableVertexAttribArray(7);
+			glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)0);
+			glEnableVertexAttribArray(8);
+			glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(vec4Size));
+			glEnableVertexAttribArray(9);
+			glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(2*vec4Size));
+			glEnableVertexAttribArray(10);
+			glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(3*vec4Size));
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glVertexAttribDivisor(7, 1);
+			glVertexAttribDivisor(8, 1);
+			glVertexAttribDivisor(9, 1);
+			glVertexAttribDivisor(10, 1);
+			
+			// set up the instance VBO for model matricies
+			glGenBuffers(1, &rotlegVB);
+			glBindBuffer(GL_ARRAY_BUFFER, rotlegVB);
+			glBufferData(GL_ARRAY_BUFFER, NumParticles*sizeof(glm::mat4), nullptr, GL_STATIC_DRAW);
+
+			glBindVertexArray(footSkeleton.meshes[0].VAO);
+
+			glEnableVertexAttribArray(11);
+			glVertexAttribPointer(11, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)0);
+			glEnableVertexAttribArray(12);
+			glVertexAttribPointer(12, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(vec4Size));
+			glEnableVertexAttribArray(13);
+			glVertexAttribPointer(13, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(2*vec4Size));
+			glEnableVertexAttribArray(14);
+			glVertexAttribPointer(14, 4, GL_FLOAT, GL_FALSE, 4*vec4Size, (void*)(3*vec4Size));
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glVertexAttribDivisor(11, 1);
+			glVertexAttribDivisor(12, 1);
+			glVertexAttribDivisor(13, 1);
+			glVertexAttribDivisor(14, 1);
 
 			float quadVertices[] = {
 				// positions   // texCoords
@@ -394,7 +453,6 @@ class PSO {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);	
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 
-
 			glEnable(GL_DEPTH_TEST);
 
 			// Intialize particles
@@ -405,63 +463,75 @@ class PSO {
 			}
 
 			// BEGIN TESTING CODE
-			glm::mat4* Movements = new glm::mat4[NumParticles];
-			for (int i = 0; i < NumParticles; i++)
-			{
-				PoseParameters currparam = particles[i].Position;
-				// Set up MVP matricies
-				glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(currparam.XTranslation, currparam.YTranslation, currparam.ZTranslation));
-				model = glm::rotate(glm::rotate(glm::rotate(model, currparam.XRotation, glm::vec3(1, 0, 0)), currparam.YRotation, glm::vec3(0, 1, 0)), currparam.ZRotation, glm::vec3(0, 0, 1));
-				Movements[i] = model;	
-			}
+			//glm::mat4* Movements = new glm::mat4[NumParticles];
+			//glm::mat4* ToeRotations = new glm::mat4[NumParticles];
+			//glm::mat4* LegRotations = new glm::mat4[NumParticles];
 
-			glNamedBufferSubData(transformationInstanceBuffer, 0, NumParticles*sizeof(glm::mat4), &Movements[0]);
+			//for (int i = 0; i < NumParticles; i++)
+			//{
+			//	PoseParameters currparam = particles[i].Position;
+			//	// Set up MVP matricies
+			//	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(currparam.XTranslation, currparam.YTranslation, currparam.ZTranslation));
+			//	model = glm::rotate(glm::rotate(glm::rotate(model, currparam.XRotation, glm::vec3(1, 0, 0)), currparam.YRotation, glm::vec3(0, 1, 0)), currparam.ZRotation, glm::vec3(0, 0, 1));
+			//	Movements[i] = model;	
+			//	ToeRotations[i] = glm::rotate(glm::rotate(glm::rotate(glm::mat4(1.0f), currparam.ToeXRot, glm::vec3(1, 0, 0)), 0.0f, glm::vec3(0, 1, 0)), 0.0f, glm::vec3(0, 0, 1));
+			//	LegRotations[i] = glm::rotate(glm::rotate(glm::rotate(glm::mat4(1.0f), currparam.LegXRot, glm::vec3(1, 0, 0)), 0.0f, glm::vec3(0, 1, 0)), currparam.LegZRot, glm::vec3(0, 0, 1));
+			//}
 
-			while(!glfwWindowShouldClose(window))
-			{
-				RepeatShader.use();
-				RepeatShader.setInt("tex", 0);
-				glBindFramebuffer(GL_FRAMEBUFFER, peng);
-				glClear(GL_DEPTH_BUFFER_BIT);
-				glBindVertexArray(repeatQuadVAO);
-				glDrawArrays(GL_TRIANGLES, 0, 6);
+			//glNamedBufferSubData(transformationInstanceBuffer, 0, NumParticles*sizeof(glm::mat4), &Movements[0]);
+			//glNamedBufferSubData(rottoeVB, 0, NumParticles*sizeof(glm::mat4), &ToeRotations[0]);
+			//glNamedBufferSubData(rotlegVB, 0, NumParticles*sizeof(glm::mat4), &LegRotations[0]);
 
-				glEnable(GL_DEPTH_TEST);
-				//Send matricies to shader
-				RTTShader.use(); 
-				RTTShader.setMat4("u_P", ProjMat);
-				RTTShader.setInt("instances", NumParticles);
-				RTTShader.setFloat("zNear", 0.05f);
-				RTTShader.setFloat("zFar", 1.0f);
+			//while(!glfwWindowShouldClose(window))
+			//{
+			//	RepeatShader.use();
+			//	RepeatShader.setInt("tex", 0);
+			//	glBindFramebuffer(GL_FRAMEBUFFER, peng);
+			//	glClear(GL_DEPTH_BUFFER_BIT);
+			//	glBindVertexArray(repeatQuadVAO);
+			//	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-				glBindFramebuffer(GL_FRAMEBUFFER, ping);
-				glClear(GL_DEPTH_BUFFER_BIT);
+			//	glEnable(GL_DEPTH_TEST);
+			//	//Send matricies to shader
+			//	RTTShader.use(); 
+			//	RTTShader.setMat4("u_P", ProjMat);
+			//	RTTShader.setInt("instances", NumParticles);
+			//	RTTShader.setFloat("zNear", 0.05f);
+			//	RTTShader.setFloat("zFar", 1.0f);
+			//	RTTShader.setMat4("m2btoe", MeshToBoneToe);
+			//	RTTShader.setMat4("m2bleg", MeshToBoneLeg);
+			//	RTTShader.setMat4("b2mtoe", BoneToMeshToe);
+			//	RTTShader.setMat4("b2mleg", BoneToMeshLeg);
 
-				RTTShader.use();
-				glBindVertexArray(footSkeleton.meshes[0].VAO);
-				glDrawElementsInstanced(GL_TRIANGLES, footSkeleton.meshes[0].indices.size(), GL_UNSIGNED_INT, 0, NumParticles);
 
-				glBindFramebuffer(GL_FRAMEBUFFER, pong);
-				glClear(GL_DEPTH_BUFFER_BIT);
-				SubtractionShader.use();
-				SubtractionShader.setInt("screenTexture", 1);
-				SubtractionShader.setInt("gendepTexture", 2);
-				glBindVertexArray(quadVAO);
-				glDrawArrays(GL_TRIANGLES, 0, 6);
+			//	glBindFramebuffer(GL_FRAMEBUFFER, ping);
+			//	glClear(GL_DEPTH_BUFFER_BIT);
 
-				glBindFramebuffer(GL_FRAMEBUFFER, 0);
-				glClear(GL_DEPTH_BUFFER_BIT);
-				PTShader.use();
-				PTShader.setInt("tex", 2);
-				glBindVertexArray(quadVAO);
-				glViewport(0, 0, NumParticles*128, 128);
-				glDrawArrays(GL_TRIANGLES, 0, 6);
+			//	RTTShader.use();
+			//	glBindVertexArray(footSkeleton.meshes[0].VAO);
+			//	glDrawElementsInstanced(GL_TRIANGLES, footSkeleton.meshes[0].indices.size(), GL_UNSIGNED_INT, 0, NumParticles);
 
-				glfwSwapBuffers(window);
-				glfwPollEvents();
-			}
+			//	glBindFramebuffer(GL_FRAMEBUFFER, pong);
+			//	glClear(GL_DEPTH_BUFFER_BIT);
+			//	SubtractionShader.use();
+			//	SubtractionShader.setInt("screenTexture", 1);
+			//	SubtractionShader.setInt("gendepTexture", 2);
+			//	glBindVertexArray(quadVAO);
+			//	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-			return PoseParameters();
+			//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			//	glClear(GL_DEPTH_BUFFER_BIT);
+			//	PTShader.use();
+			//	PTShader.setInt("tex", 2);
+			//	glBindVertexArray(quadVAO);
+			//	glViewport(0, 0, NumParticles*128, 128);
+			//	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			//	glfwSwapBuffers(window);
+			//	glfwPollEvents();
+			//}
+
+			//return PoseParameters();
 
 			// END TESTING CODE
 
@@ -474,6 +544,8 @@ class PSO {
 			for (int generation = 0; generation < iters; generation++)
 			{
 				glm::mat4* Movements = new glm::mat4[NumParticles];
+				glm::mat4* ToeRotations = new glm::mat4[NumParticles];
+				glm::mat4* LegRotations = new glm::mat4[NumParticles];
 				for (int i = 0; i < NumParticles; i++)
 				{
 					PoseParameters currparam = particles[i].Position;
@@ -481,9 +553,13 @@ class PSO {
 					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(currparam.XTranslation, currparam.YTranslation, currparam.ZTranslation));
 					model = glm::rotate(glm::rotate(glm::rotate(model, currparam.XRotation, glm::vec3(1, 0, 0)), currparam.YRotation, glm::vec3(0, 1, 0)), currparam.ZRotation, glm::vec3(0, 0, 1));
 					Movements[i] = model;	
+					ToeRotations[i] = glm::rotate(glm::rotate(glm::rotate(glm::mat4(1.0f), currparam.ToeXRot, glm::vec3(1, 0, 0)), 0.0f, glm::vec3(0, 1, 0)), 0.0f, glm::vec3(0, 0, 1));
+					LegRotations[i] = glm::rotate(glm::rotate(glm::rotate(glm::mat4(1.0f), currparam.LegXRot, glm::vec3(1, 0, 0)), 0.0f, glm::vec3(0, 1, 0)), currparam.LegZRot, glm::vec3(0, 0, 1));
 				}
 
 				glNamedBufferSubData(transformationInstanceBuffer, 0, NumParticles*sizeof(glm::mat4), &Movements[0]);
+				glNamedBufferSubData(rottoeVB, 0, NumParticles*sizeof(glm::mat4), &ToeRotations[0]);
+				glNamedBufferSubData(rotlegVB, 0, NumParticles*sizeof(glm::mat4), &LegRotations[0]);
 
 				RepeatShader.use();
 				RepeatShader.setInt("tex", 0);
@@ -499,6 +575,10 @@ class PSO {
 				RTTShader.setInt("instances", NumParticles);
 				RTTShader.setFloat("zNear", 0.05f);
 				RTTShader.setFloat("zFar", 1.0f);
+				RTTShader.setMat4("m2btoe", MeshToBoneToe);
+				RTTShader.setMat4("m2bleg", MeshToBoneLeg);
+				RTTShader.setMat4("b2mtoe", BoneToMeshToe);
+				RTTShader.setMat4("b2mleg", BoneToMeshLeg);
 
 				glBindFramebuffer(GL_FRAMEBUFFER, ping);
 				glClear(GL_DEPTH_BUFFER_BIT);
@@ -600,11 +680,11 @@ class PSO {
 							GlobalBestEnergy = currentdt[p];
 							GlobalBestPosition = particles[p].Position;
 						}
-						std::cout << "cie: " << currentdt[p]*128*128 << std::endl;
-						std::cout << "cbes for particle " << p << ": " << particles[p].BestEnergyScore*128*128 << std::endl;
+						//std::cout << "cie: " << currentdt[p]*128*128 << std::endl;
+						//std::cout << "cbes for particle " << p << ": " << particles[p].BestEnergyScore*128*128 << std::endl;
 					}
-					//std::cout << "cie: " << currentdt[p]*128*128 << std::endl;
-					//std::cout << "cbes for particle " << p << ": " << particles[p].BestEnergyScore*128*128 << std::endl;
+					std::cout << "cie: " << currentdt[p]*128*128 << std::endl;
+					std::cout << "cbes for particle " << p << ": " << particles[p].BestEnergyScore*128*128 << std::endl;
 				}
 				std::cout << "gbe: " << GlobalBestEnergy*128*128 << std::endl;
 
@@ -618,6 +698,7 @@ class PSO {
 					particles[p].Velocity = particles[p].Velocity + (personalVelocity + socialVelocity)*ConstrictionConst;
 					particles[p].Velocity.Assuage();
 					particles[p].Position = particles[p].Position + particles[p].Velocity; 
+					particles[p].Position.AssuagePosition();
 				}
 				delete[] currentdt;
 			}
